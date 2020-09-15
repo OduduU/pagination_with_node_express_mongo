@@ -35,7 +35,6 @@ exports.getProduct = (req, res, next) => {
 	const prodId = req.params.productId;
 	console.log('getById', prodId)
 	ProductModel.findById(prodId).then((product) => {
-		console.log('singleProd: ', product)
 		res.render("shop/product-detail", {
 			product,
 			docTitle: product.title,

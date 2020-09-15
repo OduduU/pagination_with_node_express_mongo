@@ -1,3 +1,4 @@
+const mongodb = require("mongodb");
 const ProductModel = require("../models/product");
 
 exports.getAddProducts = (req, res, next) => {
@@ -28,7 +29,6 @@ exports.postAddProducts = (req, res, next) => {
 	product
 		.save()
 		.then((result) => {
-			console.log("Created Product: ", result);
 			res.redirect("/admin/products");
 		})
 		.catch((err) => {
@@ -36,40 +36,71 @@ exports.postAddProducts = (req, res, next) => {
 		});
 };
 
-// exports.getEditProducts = (req, res, next) => {
-// 	const editMode = req.query.edit;
-// 	if (editMode !== "true") {
-// 		return res.redirect("/");
-// 	}
-// 	const prodId = req.params.productId;
-// 	ProductModel.findById(prodId, (product) => {
-// 		if (!product) return res.redirect("/");
+exports.getEditProducts = (req, res, next) => {
+	const editMode = req.query.edit;
+	if (editMode !== "true") {
+		return res.redirect("/");
+	}
+	const prodId = req.params.productId;
+	ProductModel.findById(prodId)
+		.then((product) => {
+			if (!product) return res.redirect("/");
+			console.log("productToEdit: ", product);
+			res.render("admin/edit-product", {
+				docTitle: "Edit Product",
+				path: "/admin/edit-product",
+				editing: editMode,
+				product,
+			});
+		})
+		.catch((err) => console.log(err));
+	// ProductModel.findById(prodId, (product) => {
+	// 	if (!product) return res.redirect("/");
 
-// 		res.render("admin/edit-product", {
-// 			docTitle: "Edit Product",
-// 			path: "/admin/edit-product",
-// 			editing: editMode,
-// 			product,
-// 		});
-// 	});
-// };
+	// 	res.render("admin/edit-product", {
+	// 		docTitle: "Edit Product",
+	// 		path: "/admin/edit-product",
+	// 		editing: editMode,
+	// 		product,
+	// 	});
+	// });
+};
 
-// exports.postEditProduct = (req, res, next) => {
-// 	const prodId = req.body.productId;
-// 	const updatedTitle = req.body.title;
-// 	const updatedPrice = req.body.price;
-// 	const updatedImageUrl = req.body.imageUrl;
-// 	const updatedDesc = req.body.description;
-// 	const updatedProduct = new ProductModel(
-// 		prodId,
-// 		updatedTitle,
-// 		updatedImageUrl,
-// 		updatedDesc,
-// 		updatedPrice
-// 	);
-// 	updatedProduct.save();
-// 	res.redirect("/admin/products");
-// };
+exports.postEditProduct = (req, res, next) => {
+	const prodId = req.body.productId;
+	const updatedTitle = req.body.title;
+	const updatedPrice = req.body.price;
+	const updatedImageUrl = req.body.imageUrl;
+	const updatedDesc = req.body.description;
+
+	const product = new ProductModel(
+		updatedTitle,
+		updatedPrice,
+		updatedDesc,
+		updatedImageUrl,
+		new mongodb.ObjectId(prodId)
+	);
+
+	product
+		.save()
+		.then((result) => {
+			console.log("Updatedresult: ", result);
+			res.redirect("/admin/products");
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+
+	// const updatedProduct = new ProductModel(
+	// 	prodId,
+	// 	updatedTitle,
+	// 	updatedImageUrl,
+	// 	updatedDesc,
+	// 	updatedPrice
+	// );
+	// updatedProduct.save();
+	// res.redirect("/admin/products");
+};
 
 // exports.postDeleteProduct = (req, res, next) => {
 // 	const prodId = req.body.productId;
@@ -79,12 +110,21 @@ exports.postAddProducts = (req, res, next) => {
 // 	});
 // };
 
-// exports.getProducts = (req, res, next) => {
-// 	ProductModel.fetchAll((products) => {
-// 		res.render("admin/products", {
-// 			prods: products,
-// 			docTitle: "Admin Products",
-// 			path: "/admin/products",
-// 		});
-// 	});
-// };
+exports.getProducts = (req, res, next) => {
+	ProductModel.fetchAll()
+		.then((products) => {
+			res.render("admin/products", {
+				prods: products,
+				docTitle: "Admin Products",
+				path: "/admin/products",
+			});
+		})
+		.catch((err) => console.log(err));
+	// ProductModel.fetchAll((products) => {
+	// 	res.render("admin/products", {
+	// 		prods: products,
+	// 		docTitle: "Admin Products",
+	// 		path: "/admin/products",
+	// 	});
+	// });
+};
