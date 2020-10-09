@@ -1,4 +1,5 @@
-const {validationResult} = require('express-validator')
+const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 
 const ProductModel = require("../models/product");
 
@@ -8,7 +9,7 @@ exports.getAddProducts = (req, res, next) => {
     path: "/admin/add-product",
     editing: false,
     hasError: false,
-    errorMessage: null
+    errorMessage: null,
   });
 };
 
@@ -29,9 +30,9 @@ exports.postAddProducts = (req, res, next) => {
         title,
         imageUrl,
         price,
-        description
+        description,
       },
-      errorMessage: errors.array()[0].msg
+      errorMessage: errors.array()[0].msg,
     });
   }
 
@@ -42,13 +43,17 @@ exports.postAddProducts = (req, res, next) => {
     imageUrl,
     userId: req.user,
   });
+
   product
     .save()
     .then((result) => {
       res.redirect("/admin/products");
     })
     .catch((err) => {
-      console.log(err);
+      // res.redirect('/500');
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
@@ -67,10 +72,14 @@ exports.getEditProducts = (req, res, next) => {
         editing: editMode,
         product,
         hasError: false,
-        errorMessage: null
+        errorMessage: null,
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postEditProduct = (req, res, next) => {
@@ -92,15 +101,16 @@ exports.postEditProduct = (req, res, next) => {
         imageUrl: updatedImageUrl,
         price: updatedPrice,
         description: updatedDesc,
-        _id: prodId
+        _id: prodId,
       },
-      errorMessage: errors.array()[0].msg
+      errorMessage: errors.array()[0].msg,
     });
   }
 
   ProductModel.findById(prodId)
     .then((product) => {
-      if (product.userId.toString() !== req.user._id.toString()) return res.redirect('/');
+      if (product.userId.toString() !== req.user._id.toString())
+        return res.redirect("/");
       product.title = updatedTitle;
       product.price = updatedPrice;
       product.description = updatedDesc;
@@ -110,7 +120,9 @@ exports.postEditProduct = (req, res, next) => {
       });
     })
     .catch((err) => {
-      console.log(err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
@@ -121,12 +133,14 @@ exports.postDeleteProduct = (req, res, next) => {
       res.redirect("/admin/products");
     })
     .catch((err) => {
-      console.log(err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
 exports.getProducts = (req, res, next) => {
-  ProductModel.find({userId: req.user._id})
+  ProductModel.find({ userId: req.user._id })
     // .select("title price -_id")
     // .populate("userId", "name")
     .then((products) => {
@@ -136,5 +150,9 @@ exports.getProducts = (req, res, next) => {
         path: "/admin/products",
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };

@@ -57,28 +57,41 @@ app.use(csrfProtection);
 app.use(flash())
 
 app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
+app.use((req, res, next) => {
   if (!req.session.user) return next();
   UserModel.findById(req.session.user._id)
-    .then((user) => {
+  .then((user) => {
+    throw new Error('Async')
+      if (!user) return next();
       req.user = user;
       next();
     })
     .catch((err) => {
-      console.log(err);
+      const error = new Error(err)
+      return next(error)
     });
-});
-
-app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
-  res.locals.csrfToken = req.csrfToken();
-  next();
 });
 
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get('/500', errorController.get500)
+
 app.use(errorController.pageNotFound);
+
+app.use((error, req, res, next) => {
+  // res.redirect('/500')
+  res.status(500).render('500', {
+    docTitle: "Error dn dy",
+    path: "Error dn dy",
+  })
+})
 
 mongoose
   .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -104,7 +117,9 @@ mongoose
     });
   })
   .catch((err) => {
-    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   });
 
 // const server = http.createServer(app);

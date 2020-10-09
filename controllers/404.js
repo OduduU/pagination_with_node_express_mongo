@@ -5,3 +5,11 @@ exports.pageNotFound = (req, res, next) => {
     isAuthenticated: req.isLoggedIn,
   });
 };
+
+exports.get500 = (req, res, next) => {
+  res.render("500", {
+    docTitle: "This app dn cast!",
+    path: null,
+    isAuthenticated: req.isLoggedIn,
+  });
+};
