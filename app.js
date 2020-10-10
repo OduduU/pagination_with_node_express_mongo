@@ -66,7 +66,6 @@ app.use((req, res, next) => {
   if (!req.session.user) return next();
   UserModel.findById(req.session.user._id)
   .then((user) => {
-    throw new Error('Async')
       if (!user) return next();
       req.user = user;
       next();
