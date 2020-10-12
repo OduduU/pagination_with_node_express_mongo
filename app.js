@@ -5,11 +5,12 @@ const express = require("express");
 const bodyParser = require("body-parser");
 // const expressHandlebar = require('express-handlebars');
 const session = require("express-session");
+const multer = require("multer");
 
 const mongoose = require("mongoose");
 const MongoDbSessionStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
-const flash = require('connect-flash')
+const flash = require("connect-flash");
 
 const MONGODB_URI =
   "mongodb+srv://oduduu:emem@2000@cluster0.uqgye.mongodb.net/shop?retryWrites=true&w=majority";
@@ -22,6 +23,23 @@ const store = new MongoDbSessionStore({
   collection: "sessions",
 });
 const csrfProtection = csrf();
+
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'images');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '_' + file.fieldname + '-' + file.originalname );
+  }
+})
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
+    cb(null, true);
+  } else {
+    cb(null, false)
+  }
+}
 
 const UserModel = require("./models/user");
 
@@ -42,9 +60,11 @@ app.set("views", "views");
 
 // Middleware to parse body data
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(multer({storage: fileStorage, fileFilter}).single('image'))
 
 // Middleware to serve static files
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/images", express.static(path.join(__dirname, "images",)));
 app.use(
   session({
     secret: "my secret",
@@ -54,7 +74,7 @@ app.use(
   })
 );
 app.use(csrfProtection);
-app.use(flash())
+app.use(flash());
 
 app.use((req, res, next) => {
   res.locals.isAuthenticated = req.session.isLoggedIn;
@@ -65,14 +85,14 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   if (!req.session.user) return next();
   UserModel.findById(req.session.user._id)
-  .then((user) => {
+    .then((user) => {
       if (!user) return next();
       req.user = user;
       next();
     })
     .catch((err) => {
-      const error = new Error(err)
-      return next(error)
+      const error = new Error(err);
+      next(error);
     });
 });
 
@@ -80,17 +100,17 @@ app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
-app.get('/500', errorController.get500)
+app.get("/500", errorController.get500);
 
 app.use(errorController.pageNotFound);
 
 app.use((error, req, res, next) => {
   // res.redirect('/500')
-  res.status(500).render('500', {
+  res.status(500).render("500", {
     docTitle: "Error dn dy",
-    path: "Error dn dy",
-  })
-})
+    path: "/500"
+  });
+});
 
 mongoose
   .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -116,11 +136,5 @@ mongoose
     });
   })
   .catch((err) => {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error);
+    console.log('Failed to connect to database.')
   });
-
-// const server = http.createServer(app);
-
-// server.listen(3000);
