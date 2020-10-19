@@ -12,12 +12,9 @@ exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
   let totalItems;
 
-  console.log('page :>> ', page);
-
   ProductModel.find()
     .countDocuments()
     .then((numProducts) => {
-      console.log('numProducts :>> ', numProducts);
       totalItems = numProducts;
       return ProductModel.find()
         .skip((page - 1) * ITEM_PER_PAGE)
@@ -64,12 +61,9 @@ exports.getIndex = (req, res, next) => {
   const page = +req.query.page || 1;
   let totalItems;
 
-  console.log('page :>> ', page);
-
   ProductModel.find()
     .countDocuments()
     .then((numProducts) => {
-      console.log('numProducts :>> ', numProducts);
       totalItems = numProducts;
       return ProductModel.find()
         .skip((page - 1) * ITEM_PER_PAGE)
